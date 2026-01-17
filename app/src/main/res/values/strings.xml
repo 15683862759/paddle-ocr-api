@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">paddleOCR-V5-API</string>
+    <string name="accessibility_service_description">This service allows the app to take silent screenshots for OCR processing.</string>
+</resources>
