@@ -114,6 +114,7 @@ class OcrAccessibilityService : AccessibilityService() {
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.R)
     private fun processScreenshot(bitmap: Bitmap) {
         logToFile("Processing screenshot.")
         serviceScope.launch {
@@ -124,9 +125,9 @@ class OcrAccessibilityService : AccessibilityService() {
                     val originalWidth = bitmap.width
                     val originalHeight = bitmap.height
 
-                    logToFile("Compressing bitmap with JPEG quality 95.")
+                    logToFile("Compressing bitmap with WEBP_LOSSY quality 80.")
                     baos = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 95, baos)
+                    bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 80, baos)
                     val imageBytes = baos.toByteArray()
                     fileData = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
 
