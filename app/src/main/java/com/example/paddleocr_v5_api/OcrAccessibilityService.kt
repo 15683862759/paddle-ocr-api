@@ -30,10 +30,7 @@ class OcrAccessibilityService : AccessibilityService() {
 
     companion object {
         @Serializable
-        data class SimplifiedOcrResult(val text: String, val center: Point)
-
-        @Serializable
-        data class Point(val x: Int, val y: Int)
+        data class SimplifiedOcrResult(val text: String, val centerX: Int, val centerY: Int)
     }
 
     private val serviceScope = CoroutineScope(Dispatchers.IO)
@@ -179,7 +176,8 @@ class OcrAccessibilityService : AccessibilityService() {
 
                                             SimplifiedOcrResult(
                                                 text = text,
-                                                center = Point(x = centerX, y = centerY)
+                                                centerX = centerX,
+                                                centerY = centerY
                                             )
                                         } else {
                                             logToFile("A box didn't have 4 points: $boxElement")
