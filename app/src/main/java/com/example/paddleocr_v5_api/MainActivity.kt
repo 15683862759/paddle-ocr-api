@@ -5,6 +5,7 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Environment
@@ -14,13 +15,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -78,7 +92,7 @@ class MainActivity : ComponentActivity() {
                     val isServiceEnabled = isAccessibilityServiceEnabled(this)
                     logToFile("Accessibility service enabled: $isServiceEnabled")
                     if (isServiceEnabled) {
-                        ServiceRunningScreen()
+                        TokenManagementScreen()
                     } else {
                         AccessibilitySettingsScreen { openAccessibilitySettings() }
                     }
@@ -109,7 +123,7 @@ class MainActivity : ComponentActivity() {
         }
         logToFile("My service ComponentName: $myService")
 
-        val isEnabled = enabledServices.any { 
+        val isEnabled = enabledServices.any {
             val serviceComponent = ComponentName.unflattenFromString(it.id)
             serviceComponent == myService
         }
@@ -121,7 +135,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AccessibilitySettingsScreen(onButtonClick: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -136,11 +152,28 @@ fun AccessibilitySettingsScreen(onButtonClick: () -> Unit) {
 }
 
 @Composable
-fun ServiceRunningScreen() {
+fun TokenManagementScreen() {
     val context = LocalContext.current
+    val sharedPreferences = remember {
+        context.getSharedPreferences("ocr_tokens", Context.MODE_PRIVATE)
+    }
+    var tokens by remember {
+        mutableStateOf(sharedPreferences.getStringSet("tokens", emptySet())?.toList() ?: emptyList())
+    }
+    var newToken by remember { mutableStateOf("") }
+
+    fun saveTokens(updatedTokens: List<String>) {
+        tokens = updatedTokens
+        with(sharedPreferences.edit()) {
+            putStringSet("tokens", updatedTokens.toSet())
+            apply()
+        }
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -164,6 +197,49 @@ fun ServiceRunningScreen() {
         ) {
             Text("Manual Trigger Test")
         }
+
+        // Token management UI
+        Column(modifier = Modifier.padding(top = 32.dp)) {
+            Text(
+                text = "Manage Tokens",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            OutlinedTextField(
+                value = newToken,
+                onValueChange = { newToken = it },
+                label = { Text("New Token") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Button(
+                onClick = {
+                    if (newToken.isNotBlank()) {
+                        saveTokens(tokens + newToken)
+                        newToken = ""
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+            ) {
+                Text("Add Token")
+            }
+            LazyColumn(modifier = Modifier.padding(top = 16.dp)) {
+                items(tokens) { token ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(token, modifier = Modifier.weight(1f))
+                        IconButton(onClick = {
+                            saveTokens(tokens.filter { it != token })
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Token")
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -179,6 +255,6 @@ fun AccessibilitySettingsScreenPreview() {
 @Composable
 fun ServiceRunningScreenPreview() {
     PaddleOCRV5APITheme {
-        ServiceRunningScreen()
+        TokenManagementScreen()
     }
 }

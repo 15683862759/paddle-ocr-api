@@ -1,5 +1,6 @@
 package com.example.paddleocr_v5_api
 
+import android.content.Context
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -10,8 +11,6 @@ import java.util.concurrent.TimeUnit
 object OcrApiHelper {
 
     private const val API_URL = "https://9bp24cr2r086318a.aistudio-app.com/"
-
-    val TOKEN: String = BuildConfig.OCR_API_KEY
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -28,4 +27,24 @@ object OcrApiHelper {
         .build()
 
     val apiService: OcrApiService = retrofit.create(OcrApiService::class.java)
+
+    fun getAuthHeader(context: Context): String? {
+        val sharedPreferences = context.getSharedPreferences("ocr_tokens", Context.MODE_PRIVATE)
+        val tokens = sharedPreferences.getStringSet("tokens", emptySet())?.toList() ?: emptyList()
+
+        if (tokens.isEmpty()) {
+            return null
+        }
+
+        val lastUsedIndexKey = "last_used_token_index"
+        val lastIndex = sharedPreferences.getInt(lastUsedIndexKey, -1)
+        val nextIndex = (lastIndex + 1) % tokens.size
+
+        with(sharedPreferences.edit()) {
+            putInt(lastUsedIndexKey, nextIndex)
+            apply()
+        }
+
+        return "token ${tokens[nextIndex]}"
+    }
 }

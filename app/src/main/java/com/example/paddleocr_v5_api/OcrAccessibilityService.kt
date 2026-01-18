@@ -116,6 +116,14 @@ class OcrAccessibilityService : AccessibilityService() {
         logToFile("Processing screenshot.")
         serviceScope.launch {
             try {
+                val authHeader = OcrApiHelper.getAuthHeader(applicationContext)
+                if (authHeader == null) {
+                    val errorMessage = "No API token configured."
+                    logToFile(errorMessage)
+                    saveTextToFile(errorMessage, true)
+                    return@launch
+                }
+
                 var baos: ByteArrayOutputStream? = null
                 val fileData: String?
                 try {
@@ -150,7 +158,7 @@ class OcrAccessibilityService : AccessibilityService() {
 
                     logToFile("Making OCR API call with full parameters.")
                     val startTime = System.currentTimeMillis()
-                    val response = OcrApiHelper.apiService.getOcrResult("token ${OcrApiHelper.TOKEN}", request)
+                    val response = OcrApiHelper.apiService.getOcrResult(authHeader, request)
                     val endTime = System.currentTimeMillis()
                     val duration = endTime - startTime
                     logToFile("OCR API call successful. Duration: ${duration} ms.")
