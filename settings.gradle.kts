@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "paddleOCR-V5-API"
 include(":app")
- 
+include(":opencv-sdk")
